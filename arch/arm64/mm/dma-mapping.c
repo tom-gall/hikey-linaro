@@ -29,6 +29,9 @@
 
 #include <asm/cacheflush.h>
 
+struct dma_map_ops *dma_ops;
+EXPORT_SYMBOL(dma_ops);
+
 static pgprot_t __get_dma_pgprot(struct dma_attrs *attrs, pgprot_t prot,
 				 bool coherent)
 {
@@ -513,6 +516,7 @@ EXPORT_SYMBOL(dummy_dma_ops);
 
 static int __init arm64_dma_init(void)
 {
+	dma_ops = &swiotlb_dma_ops;
 	return atomic_pool_init();
 }
 arch_initcall(arm64_dma_init);
@@ -992,4 +996,10 @@ void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
 
 	dev->archdata.dma_coherent = coherent;
 	__iommu_setup_dma_ops(dev, dma_base, size, iommu);
+}
+
+void arch_xhci_setup_dma_ops(struct device *dev)
+{
+	if (dev)
+		dev->archdata.dma_ops = &swiotlb_dma_ops;
 }

@@ -30,9 +30,16 @@ contain the following properties.
 	0: SPI
 	1: Texas Instruments Synchronous Serial Frame Format
 	2: Microwire (Half Duplex)
-- pl022,com-mode : polling, interrupt or dma
+- pl022,com-mode : specifies the transfer mode:
+	0: interrupt mode
+	1: polling mode (default mode if property not present)
+	2: DMA mode
 - pl022,rx-level-trig : Rx FIFO watermark level
+	Set to 0 for watermark level of 1 element (default if property not
+	present), 1 for 4 elements, 2 for 8 elements, 3 for 16 element or 4
+	for 32 elements
 - pl022,tx-level-trig : Tx FIFO watermark level
+	Same values and default as for pl022,rx-level-trig
 - pl022,ctrl-len : Microwire interface: Control length
 - pl022,wait-state : Microwire interface: Wait state
 - pl022,duplex : Microwire interface: Full/Half duplex
@@ -56,9 +63,7 @@ Example:
 			spi-max-frequency = <12000000>;
 			spi-cpol;
 			spi-cpha;
-			pl022,hierarchy = <0>;
 			pl022,interface = <0>;
-			pl022,slave-tx-disable;
 			pl022,com-mode = <0x2>;
 			pl022,rx-level-trig = <0>;
 			pl022,tx-level-trig = <0>;
@@ -67,4 +72,3 @@ Example:
 			pl022,duplex = <0>;
 		};
 	};
-	

@@ -88,6 +88,10 @@ source "drivers/regulator/Kconfig"
 
 source "drivers/media/Kconfig"
 
+source "drivers/vcodec/venc/Kconfig"
+
+source "drivers/vcodec/vdec/Kconfig"
+
 source "drivers/video/Kconfig"
 
 source "sound/Kconfig"
@@ -172,6 +176,8 @@ source "drivers/ipack/Kconfig"
 
 source "drivers/reset/Kconfig"
 
+source "drivers/gpu/arm_gpu/Kconfig"
+
 source "drivers/fmc/Kconfig"
 
 source "drivers/phy/Kconfig"
@@ -195,6 +201,8 @@ source "drivers/nvmem/Kconfig"
 source "drivers/hwtracing/stm/Kconfig"
 
 source "drivers/hwtracing/intel_th/Kconfig"
+
+source "drivers/hisi/Kconfig"
 
 source "drivers/fpga/Kconfig"
 

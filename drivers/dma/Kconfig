@@ -279,11 +279,19 @@ config INTEL_MIC_X100_DMA
 
 config K3_DMA
 	tristate "Hisilicon K3 DMA support"
-	depends on ARCH_HI3xxx
 	select DMA_ENGINE
 	select DMA_VIRTUAL_CHANNELS
 	help
 	  Support the DMA engine for Hisilicon K3 platform
+	  devices.
+
+config HISI_ASP_DMA
+	tristate "Hisilicon Kirin ASP DMA support"
+	depends on ARCH_HISI
+	select DMA_ENGINE
+	select DMA_VIRTUAL_CHANNELS
+	help
+	  Support the DMA engine for Hisilicon Kirin platform
 	  devices.
 
 config LPC18XX_DMAMUX
