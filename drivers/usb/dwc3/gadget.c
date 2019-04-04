@@ -3418,9 +3418,13 @@ void dwc3_gadget_exit(struct dwc3 *dwc)
 
 int dwc3_gadget_suspend(struct dwc3 *dwc)
 {
-	dwc3_gadget_disable_irq(dwc);
-	dwc3_gadget_disconnect_interrupt(dwc);
-	dwc3_gadget_run_stop(dwc, false, true);
+	if (!dwc->gadget_driver)
+		return 0;
+
+	if (dwc->pullups_connected) {
+		dwc3_gadget_disable_irq(dwc);
+		dwc3_gadget_run_stop(dwc, true, true);
+	}
 
 	__dwc3_gadget_ep_disable(dwc->eps[0]);
 	__dwc3_gadget_ep_disable(dwc->eps[1]);
@@ -3438,8 +3442,13 @@ int dwc3_gadget_resume(struct dwc3 *dwc)
 	struct dwc3_ep		*dep;
 	int			ret;
 
+<<<<<<< HEAD
 	/* ep0 may be at wrong state, here reset ep0 */
 	(void)__dwc3_gadget_exit(dwc);
+=======
+	if (!dwc->gadget_driver)
+		return 0;
+>>>>>>> common/android-4.4-p
 
 	/* Start with SuperSpeed Default */
 	dwc3_gadget_ep0_desc.wMaxPacketSize = cpu_to_le16(512);
