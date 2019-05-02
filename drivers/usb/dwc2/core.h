@@ -417,6 +417,11 @@ enum dwc2_ep0_state {
  *			needed.
  *			0 - No (default)
  *			1 - Yes
+ * @change_speed_quirk: Change speed configuration to DWC2_SPEED_PARAM_FULL
+ *                      while full&low speed device connect. And change speed
+ *                      back to DWC2_SPEED_PARAM_HIGH while device is gone.
+ *			0 - No (default)
+ *			1 - Yes
  *
  * The following parameters may be specified when starting the module. These
  * parameters define how the DWC_otg controller should be configured. A
@@ -457,6 +462,7 @@ struct dwc2_core_params {
 	int uframe_sched;
 	int external_id_pin_ctl;
 	int hibernation;
+	int change_speed_quirk;
 };
 
 /**
@@ -621,6 +627,19 @@ struct dwc2_hregs_backup {
 	u32 hprt0;
 	u32 hfir;
 	bool valid;
+};
+
+/*
+ * struct dwc2_extcon - Holds data related to extcon connections
+ *
+ * @nb:		Notifier block for callbacks
+ * @extcon:	Pointer to extcon device
+ * @state:	State of extcon connection
+ */
+struct dwc2_extcon {
+	struct notifier_block	nb;
+	struct extcon_dev	*extcon;
+	int			state;
 };
 
 /*
@@ -996,6 +1015,10 @@ struct dwc2_hsotg {
 	u32 g_np_g_tx_fifo_sz;
 	u32 g_tx_fifo_sz[MAX_EPS_CHANNELS];
 #endif /* CONFIG_USB_DWC2_PERIPHERAL || CONFIG_USB_DWC2_DUAL_ROLE */
+
+	struct dwc2_extcon extcon_vbus;
+	struct dwc2_extcon extcon_id;
+	struct delayed_work extcon_work;
 };
 
 /* Reasons for halting a host channel */
@@ -1020,7 +1043,7 @@ enum dwc2_halt_status {
  * The following functions support initialization of the core driver component
  * and the DWC_otg controller
  */
-extern int dwc2_core_reset(struct dwc2_hsotg *hsotg);
+extern int dwc2_core_reset(struct dwc2_hsotg *hsotg, bool skip_wait);
 extern int dwc2_core_reset_and_force_dr_mode(struct dwc2_hsotg *hsotg);
 extern int dwc2_enter_hibernation(struct dwc2_hsotg *hsotg);
 extern int dwc2_exit_hibernation(struct dwc2_hsotg *hsotg, bool restore);
@@ -1040,6 +1063,11 @@ extern void dwc2_flush_rx_fifo(struct dwc2_hsotg *hsotg);
 
 extern void dwc2_enable_global_interrupts(struct dwc2_hsotg *hcd);
 extern void dwc2_disable_global_interrupts(struct dwc2_hsotg *hcd);
+
+extern int dwc2_extcon_vbus_notifier(struct notifier_block *nb,
+				     unsigned long event, void *ptr);
+extern int dwc2_extcon_id_notifier(struct notifier_block *nb,
+				   unsigned long event, void *ptr);
 
 /* This function should be called on every hardware interrupt. */
 extern irqreturn_t dwc2_handle_common_intr(int irq, void *dev);
@@ -1298,6 +1326,7 @@ extern int dwc2_hsotg_remove(struct dwc2_hsotg *hsotg);
 extern int dwc2_hsotg_suspend(struct dwc2_hsotg *dwc2);
 extern int dwc2_hsotg_resume(struct dwc2_hsotg *dwc2);
 extern int dwc2_gadget_init(struct dwc2_hsotg *hsotg, int irq);
+extern void dwc2_gadget_notify(struct dwc2_hsotg *hsotg);
 extern void dwc2_hsotg_core_init_disconnected(struct dwc2_hsotg *dwc2,
 		bool reset);
 extern void dwc2_hsotg_core_connect(struct dwc2_hsotg *hsotg);
@@ -1315,6 +1344,7 @@ static inline int dwc2_hsotg_resume(struct dwc2_hsotg *dwc2)
 { return 0; }
 static inline int dwc2_gadget_init(struct dwc2_hsotg *hsotg, int irq)
 { return 0; }
+static inline void dwc2_gadget_notify(struct dwc2_hsotg *hsotg) {}
 static inline void dwc2_hsotg_core_init_disconnected(struct dwc2_hsotg *dwc2,
 		bool reset) {}
 static inline void dwc2_hsotg_core_connect(struct dwc2_hsotg *hsotg) {}

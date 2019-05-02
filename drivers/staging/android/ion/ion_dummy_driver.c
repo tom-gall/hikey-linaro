@@ -51,6 +51,11 @@ static struct ion_platform_heap dummy_heaps[] = {
 			.align	= SZ_16K,
 			.priv	= (void *)(SZ_16K),
 		},
+		{
+			.id	= ION_HEAP_TYPE_DMA,
+			.type	= ION_HEAP_TYPE_DMA,
+			.name	= "cma",
+		},
 };
 
 static struct ion_platform_data dummy_ion_pdata = {
@@ -58,13 +63,23 @@ static struct ion_platform_data dummy_ion_pdata = {
 	.heaps = dummy_heaps,
 };
 
+static u64 dummy_dmamask = DMA_BIT_MASK(32);
+
+static struct platform_device ion_cma_device = {
+	.name = "ion-cma-device",
+	.id = -1,
+	.dev = {
+		.init_name = "ion-cma-device",
+		.dma_mask = &dummy_dmamask,
+		.coherent_dma_mask = DMA_BIT_MASK(32),
+	}
+};
+
 static int __init ion_dummy_init(void)
 {
 	int i, err;
 
 	idev = ion_device_create(NULL);
-	if (IS_ERR(idev))
-		return PTR_ERR(idev);
 	heaps = kcalloc(dummy_ion_pdata.nr, sizeof(struct ion_heap *),
 			GFP_KERNEL);
 	if (!heaps)
@@ -94,6 +109,11 @@ static int __init ion_dummy_init(void)
 				continue;
 			}
 			heap_data->base = virt_to_phys(chunk_ptr);
+		}
+
+		if (heap_data->type == ION_HEAP_TYPE_DMA) {
+			arch_setup_dma_ops(&ion_cma_device.dev, 0, DMA_BIT_MASK(32), NULL, true);
+			heap_data->priv = (void *)&ion_cma_device.dev;
 		}
 
 		heaps[i] = ion_heap_create(heap_data);

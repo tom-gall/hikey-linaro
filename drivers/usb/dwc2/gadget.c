@@ -72,6 +72,14 @@ static inline struct dwc2_hsotg_ep *index_to_ep(struct dwc2_hsotg *hsotg,
 /* forward declaration of functions */
 static void dwc2_hsotg_dump(struct dwc2_hsotg *hsotg);
 
+void dwc2_gadget_notify(struct dwc2_hsotg *hsotg)
+{
+	if (hsotg->extcon_id.state)
+		usb_gadget_vbus_connect(&hsotg->gadget);
+	else
+		usb_gadget_vbus_disconnect(&hsotg->gadget);
+}
+
 /**
  * using_dma - return the DMA status of the driver.
  * @hsotg: The driver state.
@@ -2467,6 +2475,8 @@ void dwc2_hsotg_disconnect(struct dwc2_hsotg *hsotg)
 
 	call_gadget(hsotg, disconnect);
 	hsotg->lx_state = DWC2_L3;
+
+	usb_gadget_set_state(&hsotg->gadget, USB_STATE_NOTATTACHED);
 }
 
 /**
@@ -2521,7 +2531,7 @@ void dwc2_hsotg_core_init_disconnected(struct dwc2_hsotg *hsotg,
 	kill_all_requests(hsotg, hsotg->eps_out[0], -ECONNRESET);
 
 	if (!is_usb_reset)
-		if (dwc2_core_reset(hsotg))
+		if (dwc2_core_reset(hsotg, true))
 			return;
 
 	/*
@@ -3112,6 +3122,11 @@ static int dwc2_hsotg_ep_disable(struct usb_ep *ep)
 
 	if (ep == &hsotg->eps_out[0]->ep) {
 		dev_err(hsotg->dev, "%s: called for ep0\n", __func__);
+		return -EINVAL;
+	}
+
+	if (hsotg->op_state != OTG_STATE_B_PERIPHERAL) {
+		dev_err(hsotg->dev, "%s: called in host mode?\n", __func__);
 		return -EINVAL;
 	}
 
