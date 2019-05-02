@@ -1540,6 +1540,12 @@ struct typec_port *typec_register_port(struct device *parent,
 		return ERR_PTR(id);
 	}
 
+	port->mux = typec_mux_get(parent, "typec-mux");
+	if (IS_ERR(port->mux)) {
+		ret = PTR_ERR(port->mux);
+		goto err_mux;
+	}
+
 	switch (cap->type) {
 	case TYPEC_PORT_SRC:
 		port->pwr_role = TYPEC_SOURCE;
@@ -1603,10 +1609,22 @@ struct typec_port *typec_register_port(struct device *parent,
 	if (ret) {
 		dev_err(parent, "failed to register port (%d)\n", ret);
 		put_device(&port->dev);
-		return ERR_PTR(ret);
+		goto err_register;
 	}
 
 	return port;
+
+err_register:
+	typec_switch_put(port->sw);
+
+err_switch:
+	typec_mux_put(port->mux);
+
+err_mux:
+	ida_simple_remove(&typec_index_ida, port->id);
+	kfree(port);
+
+	return ERR_PTR(ret);
 }
 EXPORT_SYMBOL_GPL(typec_register_port);
 
