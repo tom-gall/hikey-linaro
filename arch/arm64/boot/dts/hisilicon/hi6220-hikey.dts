@@ -26,6 +26,26 @@
 		stdout-path = "serial3:115200n8";
 	};
 
+	overlay_mgr {
+		compatible = "linux,overlay_manager";
+		hardware_cfg_enable_android_fstab {
+			overlay_0 {
+				fragment@0 {
+					target-path="/firmware/android/fstab/system";
+					__overlay__ {
+						status = "ok";
+					};
+				};
+				fragment@1 {
+					target-path="/firmware/android/fstab/vendor";
+					__overlay__ {
+						status = "ok";
+					};
+				};
+			};
+		};
+	};
+
 	/*
 	 * Reserve below regions from memory node:
 	 *
@@ -321,6 +341,7 @@
 
 		dwmmc_2: dwmmc2@f723f000 {
 			bus-width = <0x4>;
+			cap-sd-highspeed;
 			non-removable;
 			cap-power-off-card;
 			vmmc-supply = <&reg_vdd_3v3>;
@@ -470,6 +491,28 @@
 		optee {
 			compatible = "linaro,optee-tz";
 			method = "smc";
+		};
+		android {
+			compatible = "android,firmware";
+			fstab {
+				compatible = "android,fstab";
+				system {
+					compatible = "android,system";
+					dev = "/dev/block/platform/soc/f723d000.dwmmc0/by-name/system";
+					type = "ext4";
+					mnt_flags = "ro" ;
+					fsmgr_flags = "wait";
+					status = "disabled";
+				};
+				vendor {
+					compatible = "android,vendor";
+					dev = "/dev/block/platform/soc/f723d000.dwmmc0/by-name/vendor";
+					type = "ext4";
+					mnt_flags = "ro" ;
+					fsmgr_flags = "wait";
+					status = "disabled";
+				};
+			};
 		};
 	};
 
