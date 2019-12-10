@@ -466,6 +466,14 @@ config BMP085_SPI
 	  To compile this driver as a module, choose M here: the
 	  module will be called bmp085-spi.
 
+config HI6220_SYSCFG
+	bool "Hisilicon HI6220 System Configuration driver"
+	depends on ARCH_HISI
+	default y
+	help
+	  Hisilicon HI6220 uses some registers to configure some chip hosts to
+          work or not, e.g. disable the UART hosts reset and let's them work.
+
 config PCH_PHUB
 	tristate "Intel EG20T PCH/LAPIS Semicon IOH(ML7213/ML7223/ML7831) PHUB"
 	select GENERIC_NET_UTILS
@@ -546,6 +554,13 @@ config MEMORY_STATE_TIME
 	help
 	  Memory time statistics exported to /sys/kernel/memory_state_time
 
+config HI3660_SYSCFG
+	bool "Hisilicon HI3660 System Configuration driver"
+	default n
+	help
+	  Hisilicon HI3660 uses some registers to configure some chip hosts to
+	  work or not, e.g. disable the UART hosts reset and let's them work.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
@@ -558,4 +573,6 @@ source "drivers/misc/mic/Kconfig"
 source "drivers/misc/genwqe/Kconfig"
 source "drivers/misc/echo/Kconfig"
 source "drivers/misc/cxl/Kconfig"
+source "drivers/misc/microchip/Kconfig"
+source "drivers/misc/farichild/Kconfig"
 endmenu

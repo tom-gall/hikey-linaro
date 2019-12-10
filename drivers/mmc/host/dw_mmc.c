@@ -233,7 +233,7 @@ static u32 dw_mci_prepare_command(struct mmc_host *mmc, struct mmc_command *cmd)
 {
 	struct mmc_data	*data;
 	struct dw_mci_slot *slot = mmc_priv(mmc);
-	struct dw_mci *host = slot->host;
+	/* struct dw_mci *host = slot->host; */
 	const struct dw_mci_drv_data *drv_data = slot->host->drv_data;
 	u32 cmdr;
 
@@ -250,7 +250,7 @@ static u32 dw_mci_prepare_command(struct mmc_host *mmc, struct mmc_command *cmd)
 		cmdr |= SDMMC_CMD_PRV_DAT_WAIT;
 
 	if (cmd->opcode == SD_SWITCH_VOLTAGE) {
-		u32 clk_en_a;
+		/*u32 clk_en_a;*/
 
 		/* Special bit makes CMD11 not die */
 		cmdr |= SDMMC_CMD_VOLT_SWITCH;
@@ -270,11 +270,11 @@ static u32 dw_mci_prepare_command(struct mmc_host *mmc, struct mmc_command *cmd)
 		 * ever called with a non-zero clock.  That shouldn't happen
 		 * until the voltage change is all done.
 		 */
-		clk_en_a = mci_readl(host, CLKENA);
-		clk_en_a &= ~(SDMMC_CLKEN_LOW_PWR << slot->id);
-		mci_writel(host, CLKENA, clk_en_a);
-		mci_send_cmd(slot, SDMMC_CMD_UPD_CLK |
-			     SDMMC_CMD_PRV_DAT_WAIT, 0);
+		/*clk_en_a = mci_readl(host, CLKENA);*/
+		/*clk_en_a &= ~(SDMMC_CLKEN_LOW_PWR << slot->id);*/
+		/*mci_writel(host, CLKENA, clk_en_a);*/
+		/*mci_send_cmd(slot, SDMMC_CMD_UPD_CLK |*/
+			     /*SDMMC_CMD_PRV_DAT_WAIT, 0);*/
 	}
 
 	if (cmd->flags & MMC_RSP_PRESENT) {
@@ -1126,7 +1126,7 @@ static void dw_mci_setup_bus(struct dw_mci_slot *slot, bool force_clkinit)
 
 		/* enable clock; only low power if no SDIO */
 		clk_en_a = SDMMC_CLKEN_ENABLE << slot->id;
-		if (!test_bit(DW_MMC_CARD_NO_LOW_PWR, &slot->flags))
+		if (!test_bit(DW_MMC_CARD_NO_LOW_PWR, &slot->flags) && (slot->mmc->index != 1))
 			clk_en_a |= SDMMC_CLKEN_LOW_PWR << slot->id;
 		mci_writel(host, CLKENA, clk_en_a);
 
@@ -1300,6 +1300,8 @@ static void dw_mci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 		regs |= ((0x1 << slot->id) << 16);
 	else
 		regs &= ~((0x1 << slot->id) << 16);
+	if (mmc->index == 1)
+		regs |= (0x1 << slot->id);
 
 	mci_writel(slot->host, UHS_REG, regs);
 	slot->host->timing = ios->timing;
@@ -1542,6 +1544,8 @@ static int dw_mci_execute_tuning(struct mmc_host *mmc, u32 opcode)
 
 	if (drv_data && drv_data->execute_tuning)
 		err = drv_data->execute_tuning(slot, opcode);
+	else
+		err = 0;
 	return err;
 }
 
@@ -2880,6 +2884,13 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata)
 		return ERR_PTR(-ENOMEM);
+
+	/* find reset controller when exist */
+	pdata->rstc = devm_reset_control_get_optional(dev, NULL);
+	if (IS_ERR(pdata->rstc))
+		pdata->rstc = NULL;
+	else
+		reset_control_deassert(pdata->rstc);
 
 	/* find out number of slots supported */
 	if (of_property_read_u32(dev->of_node, "num-slots",
