@@ -231,6 +231,8 @@ out:
 	if (!used)
 		kfree(buf);
 
+	if (!ret)
+		dev_dbg(drvdata->dev, "TMC-ETB/ETF enabled\n");
 	return ret;
 }
 
