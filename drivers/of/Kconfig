@@ -125,6 +125,5 @@ config OF_OVERLAY_MGR
 config OF_DMA_DEFAULT_COHERENT
 	# arches should select this if DMA is coherent by default for OF devices
 	bool
->>>>>>> android-4.4-p
 
 endif # OF
